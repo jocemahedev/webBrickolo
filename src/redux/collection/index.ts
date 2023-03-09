@@ -17,7 +17,7 @@ import {
   DatabaseReference,
   update,
 } from "firebase/database";
-import { RootState } from "..";
+import { AppDispatch, RootState } from "..";
 import { RebrickableSet } from "../services/rebrickable/type";
 import { rebrickableApi } from "../services/rebrickable/rebrickable.web";
 
@@ -39,21 +39,22 @@ export const initialState: CollectionState = {
   incompleteParts: [],
 };
 
-export const fetchSets = createAsyncThunk<void, void>(
-  "collection/fetchSets",
-  async (_, { getState, dispatch }) => {
-    const rootState = getState() as RootState;
-    const idSets = rootState.collection.currentCollection?.idSets;
-    const dbRef = ref(db, "/collections/" + idSets);
-    const dataSnapshot = await get(query(dbRef));
-    const values: Set[] = dataSnapshot.val();
-    let datas: Set[] = [];
-    for (const data in values) {
-      datas.push(values[data]);
-    }
-    dispatch(setCurrentSets(datas));
+export const fetchSets = createAsyncThunk<
+  void,
+  void,
+  { state: RootState; dispatch: AppDispatch }
+>("collection/fetchSets", async (_, { getState, dispatch }) => {
+  const rootState = getState();
+  const idSets = rootState.collection.currentCollection?.idSets;
+  const dbRef = ref(db, "/collections/" + idSets);
+  const dataSnapshot = await get(query(dbRef));
+  const values: Set[] = dataSnapshot.val();
+  let datas: Set[] = [];
+  for (const data in values) {
+    datas.push(values[data]);
   }
-);
+  dispatch(setCurrentSets(datas));
+});
 export const updateQuantitySet = createAsyncThunk<void, number>(
   "collection/updateQuantitySet",
   async (quantity, { getState }) => {
@@ -110,6 +111,13 @@ const collectionSlice = createSlice({
         return item.id !== action.payload;
       });
     },
+    cleanMissingParts(state) {
+      state.incompleteParts = [];
+    },
+    cleanSets(state) {
+      state.allSets = [];
+      state.currentSetIndex = undefined;
+    },
   },
   extraReducers(builder) {
     builder
@@ -121,11 +129,6 @@ const collectionSlice = createSlice({
       })
       .addCase(addSet.fulfilled, (state, _action) => {
         state.addSetStatus = "fulfilled";
-      })
-      .addCase(getIncompleteParts.fulfilled, (state, action) => {
-        console.log("extra Reducer");
-        console.log(action);
-        //setIncompleteParts(incompleteParts);
       });
   },
 });
@@ -155,31 +158,27 @@ export const getIncompleteParts = createAsyncThunk<void, Set[]>(
     let incompleteParts: IncompleteParts[] = [];
     allSets
       .filter((oneSet) => oneSet.quantityCollectorParts < oneSet.quantityParts)
-      .map(async (oneSet) => {
+      .map((oneSet) => {
         const dbRef = ref(db, "/parts/" + oneSet.idParts);
-        await get(query(dbRef))
-          .then((snapshot) => {
-            if (snapshot.exists()) {
-              const values: Part[] = snapshot.val();
-              const incompletePartsSet = values.filter(
-                (value) => value.quantityCollectorPart < value.quantityPart
-              );
-              const oneIncompleteParts: IncompleteParts = {
-                set: oneSet,
-                data: incompletePartsSet,
-              };
-              incompleteParts = [...incompleteParts, oneIncompleteParts];
-              dispatch(setIncompleteParts(incompleteParts));
-            } else {
-              console.log(
-                "No data available for " + oneSet.idLego + " " + oneSet.id
-              );
-            }
-          })
-          .catch((error) => {
-            console.error(error);
-          });
+        get(query(dbRef)).then((snapshot) => {
+          if (snapshot.exists()) {
+            const values: Part[] = snapshot.val();
+            const incompletePartsSet = values.filter(
+              (value) => value.quantityCollectorPart < value.quantityPart
+            );
+            const oneIncompleteParts: IncompleteParts = {
+              set: oneSet,
+              data: incompletePartsSet,
+            };
+            incompleteParts = [...incompleteParts, oneIncompleteParts];
+          } else {
+            console.log(
+              "No data available for " + oneSet.idLego + " " + oneSet.id
+            );
+          }
+        });
       });
+    setIncompleteParts(incompleteParts);
   }
 );
 export const completeSet = createAsyncThunk<void, Set>(
@@ -290,6 +289,8 @@ export const {
   addSetToCollection,
   deleteSetToCollection,
   setAddSetStatus,
+  cleanMissingPart,
+  cleanSets,
 } = collectionSlice.actions;
 
 export default collectionSlice.reducer;

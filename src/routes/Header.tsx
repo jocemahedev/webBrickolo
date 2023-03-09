@@ -1,24 +1,14 @@
 import { Button } from "@mui/material";
 import { signOut } from "./../redux/services/firebase/AuthRequest";
 
-import {  useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useReduxDispatch, useReduxSelector } from "./../redux";
-import { getIncompleteParts, selectAllSets } from "./../redux/collection";
+
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 
 export function Header() {
-  const dispatch = useReduxDispatch();
-  const allSets = useReduxSelector(selectAllSets);
   const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
 
   return (
     <AppBar position="static">
@@ -35,7 +25,6 @@ export function Header() {
           <Button
             color="inherit"
             onClick={() => {
-              dispatch(getIncompleteParts(allSets));
               navigate("missing-parts-list");
             }}
           >

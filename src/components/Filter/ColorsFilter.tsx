@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Color } from "../../types/types";
 import { useReduxDispatch } from "../../redux";
 import { setCurrentColors } from "../../redux/set";
-import { Badge, Button, Chip, ListItemAvatar } from "@mui/material";
+
 import OutlinedInput from "@mui/material/OutlinedInput";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -18,10 +18,6 @@ const ColorsFilter = ({ colors }: ColorsFilterProps) => {
     </div>
   );
 };
-type ColorsFilterProps = {
-  colors: Color[];
-};
-
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {

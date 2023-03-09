@@ -1,7 +1,4 @@
-
-import { useReduxDispatch } from "../../redux";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import SearchResult from "../Set/SearchResult";
 import Box from "@mui/material/Box";
 
@@ -14,14 +11,11 @@ import BoxPage from "../ui/BoxPage";
 import ButtonCustom from "../ui/ButtonCustom";
 
 export default function SearchSetPage() {
-  const navigate = useNavigate();
-  const dispatch = useReduxDispatch();
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
   const [searchVisible, setSearchVisible] = useState(true);
 
   const handleChange = (event: any) => {
-    console.log("event");
     setText(event.target.value);
   };
   const handleClick = () => {

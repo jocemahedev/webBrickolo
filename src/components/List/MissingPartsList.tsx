@@ -1,17 +1,34 @@
 import { Badge, Box, Divider, Grid, Typography } from "@mui/material";
+import { useEffect } from "react";
+import { useReduxDispatch, useReduxSelector } from "../../redux";
+import {
+  getIncompleteParts,
+  selectAllSets,
+  selectIncompleteParts,
+} from "../../redux/collection";
+import { cleanParts } from "../../redux/set";
 import { IncompleteParts, Part, Set } from "../../types/types";
 import Quantity from "../Part/Quantity";
 import CountSetsIncomplete from "../Set/CountSetsIncomplete";
 
 export const MISSING_TEXT = "Missing parts";
-const MissingPartsList = ({ incompleteParts }: IncompletePartsListProps) => {
+const MissingPartsList = () => {
+  const missingParts = useReduxSelector(selectIncompleteParts);
+  const allSets = useReduxSelector(selectAllSets);
+  const dispatch = useReduxDispatch();
+  useEffect(() => {
+    dispatch(getIncompleteParts(allSets));
+    //dispatch(cleanParts());
+    //dispatch(cleanSets());
+    return () => {};
+  }, [dispatch]);
   return (
     <Box>
-      <CountSetsIncomplete />
-
-      {incompleteParts.map((oneIncompleteParts) => {
+      <CountSetsIncomplete numberSets={missingParts.length} />
+      {missingParts.map((oneIncompleteParts) => {
         return (
           <SectionItem
+            key={oneIncompleteParts.set.id}
             set={oneIncompleteParts.set}
             parts={oneIncompleteParts.data}
           />
@@ -20,14 +37,10 @@ const MissingPartsList = ({ incompleteParts }: IncompletePartsListProps) => {
     </Box>
   );
 };
-function Item({ part, idParts }: ItemProps) {
+function Item({ part }: ItemProps) {
   const numberMissing = part.quantityPart - part.quantityCollectorPart;
   return (
-    <Grid
-      item
-      key={idParts + part.index}
-      style={{ border: "solid 0.5px", padding: 5, margin: 5 }}
-    >
+    <Grid item style={{ border: "solid 0.5px", padding: 5, margin: 5 }}>
       <p>
         <b>{part.idElement}</b>
       </p>
@@ -40,6 +53,7 @@ function Item({ part, idParts }: ItemProps) {
 }
 function SectionItem({ set, parts }: SectionItemProps) {
   const numberMissing = set.quantityParts - set.quantityCollectorParts;
+
   return (
     <>
       <Divider />
@@ -60,7 +74,7 @@ function SectionItem({ set, parts }: SectionItemProps) {
         </Typography>
         <Grid container spacing={2}>
           {parts.map((part) => (
-            <Item part={part} idParts={set.idParts} />
+            <Item part={part} key={part.idElement + part.index + set.id} />
           ))}
         </Grid>
       </Box>
@@ -71,13 +85,10 @@ function SectionItem({ set, parts }: SectionItemProps) {
 
 type ItemProps = {
   part: Part;
-  idParts: string;
 };
 type SectionItemProps = {
   set: Set;
   parts: Part[];
 };
-type IncompletePartsListProps = {
-  incompleteParts: IncompleteParts[];
-};
+
 export default MissingPartsList;

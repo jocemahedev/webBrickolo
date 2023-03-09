@@ -14,20 +14,29 @@ import {
   deleteSet,
   deleteParts,
   completeSet,
+  setCurrentIndexSet,
 } from "../../redux/collection";
 import { Set } from "../../types/types";
 import { Badge, ListItemAvatar, Typography } from "@mui/material";
 import CountSets from "../Set/CountSets";
 import ButtonCustom from "../ui/ButtonCustom";
+import { useNavigate } from "react-router-dom";
+import { cleanParts } from "../../redux/set";
 
-export function CollectionList({ pressSet }: CollectionListProps) {
+export function CollectionList() {
   const currentCollection = useReduxSelector(selectCurrentCollection);
+  const navigate = useNavigate();
   const allSets = useReduxSelector(selectAllSets);
   const dispatch = useReduxDispatch();
   useEffect(() => {
+    dispatch(cleanParts());
     dispatch(fetchSets());
-    console.log("fetchSet CollectionList");
   }, [currentCollection, dispatch]);
+
+  const onPressSet = (set: Set) => {
+    dispatch(setCurrentIndexSet(set));
+    navigate("parts-list");
+  };
 
   return (
     <div>
@@ -35,7 +44,7 @@ export function CollectionList({ pressSet }: CollectionListProps) {
       <List>
         {allSets.map((oneSet) => (
           <div key={oneSet.id}>
-            <Item set={oneSet} onPress={pressSet}></Item>
+            <Item set={oneSet} onPress={onPressSet}></Item>
             <Divider />
           </div>
         ))}
@@ -52,7 +61,6 @@ function Item({ set, onPress }: ItemProps) {
   const completeSetHandler = (setToBeCompleted: Set) => {
     dispatch(completeSet(setToBeCompleted));
   };
-  const numberMissing = set.quantityParts - set.quantityCollectorParts;
   let badgeColor: "success" | "error";
   let badgeText;
   const isCompleted = set.quantityCollectorParts === set.quantityParts;
@@ -94,10 +102,6 @@ function Item({ set, onPress }: ItemProps) {
     </ListItem>
   );
 }
-
-type CollectionListProps = {
-  pressSet: (set: Set) => void;
-};
 
 type ItemProps = {
   set: Set;

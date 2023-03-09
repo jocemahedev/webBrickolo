@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import { Part } from "../../types/types";
 
 import { useReduxDispatch, useReduxSelector } from "../../redux";
-import { fetchParts, selectAllColors, selectStatus } from "../../redux/set";
+import {
+  fetchParts,
+  selectAllColors,
+  selectPartsByColorByCompleted,
+  selectStatus,
+} from "../../redux/set";
 import { Badge, Grid } from "@mui/material";
 import ColorsFilter from "../Filter/ColorsFilter";
 import { CompletePartsFilter } from "../Filter/CompletePartsFilter";
@@ -12,20 +17,22 @@ import Quantity from "../Part/Quantity";
 import QuantityParts from "../Set/QuantityParts";
 import { Box } from "@mui/system";
 
-const PartsList = ({ parts }: PartsListProps) => {
+const PartsList = () => {
   const dispatch = useReduxDispatch();
   const allColors = useReduxSelector(selectAllColors);
   const status = useReduxSelector(selectStatus);
-
-  const isLoading = status === "loading";
-  const zeroPart = parts.length === 0;
-  const ZERO_PART_MESSAGE = " Zéro part 🤦";
-  const SEE_FILTER = "See Filters  🧐";
-  const HIDE_FILTER = "Hide Filters 🫣";
+  const allParts = useReduxSelector(selectPartsByColorByCompleted);
 
   useEffect(() => {
     dispatch(fetchParts());
   }, [dispatch]);
+  console.log(allParts);
+  const isLoading = status === "loading";
+  const zeroPart = allParts.length === 0;
+  const ZERO_PART_MESSAGE = " Zéro part 🤦";
+  const SEE_FILTER = "See Filters  🧐";
+  const HIDE_FILTER = "Hide Filters 🫣";
+
   return (
     <div>
       {isLoading && (
@@ -53,8 +60,8 @@ const PartsList = ({ parts }: PartsListProps) => {
           {zeroPart && <p>{ZERO_PART_MESSAGE}</p>}
           {!zeroPart && (
             <Grid container spacing={2}>
-              {parts.map((onePart) => (
-                <Item part={onePart} />
+              {allParts.map((onePart, index) => (
+                <Item key={index} part={onePart} />
               ))}
             </Grid>
           )}
@@ -65,7 +72,6 @@ const PartsList = ({ parts }: PartsListProps) => {
 };
 
 function Item({ part }: ItemProps) {
-  const numberMissing = part.quantityPart - part.quantityCollectorPart;
   const isCompleted = part.quantityPart === part.quantityCollectorPart;
   const badgeText = part.quantityCollectorPart + "/" + part.quantityPart;
   let badgeColor: "success" | "error";
@@ -83,10 +89,6 @@ function Item({ part }: ItemProps) {
     </Grid>
   );
 }
-
-type PartsListProps = {
-  parts: Part[];
-};
 
 type ItemProps = {
   part: Part;

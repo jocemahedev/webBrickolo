@@ -30,7 +30,7 @@ export const themeOptions = {
 const theme = createTheme(themeOptions);
 
 ReactDOM.createRoot(rootElement as HTMLElement).render(
-  <React.StrictMode>
+  
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <ThemeProvider theme={theme}>
@@ -38,5 +38,5 @@ ReactDOM.createRoot(rootElement as HTMLElement).render(
         </ThemeProvider>
       </PersistGate>
     </Provider>
-  </React.StrictMode>
+
 );

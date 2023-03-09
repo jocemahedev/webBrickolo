@@ -187,6 +187,14 @@ const SetSlice = createSlice({
         state.currentSet.isCompleted = isCompleted(state.allParts);
       }
     },
+    cleanParts(state) {
+      state.currentSet = undefined;
+      state.allParts = [];
+      state.statusParts = "loading";
+      state.currentColors = [];
+      state.currentCompleteFilter = "none";
+      state.onlyMinifig = false;
+    },
   },
   extraReducers(builder) {
     builder
@@ -296,6 +304,7 @@ export const {
   setCurrentColors,
   setCurrentCompleteFilter,
   setOnlyMinifig,
+  cleanParts,
 } = SetSlice.actions;
 
 export default SetSlice.reducer;
