@@ -5,9 +5,10 @@ import {
   getIncompleteParts,
   selectAllSets,
   selectIncompleteParts,
+  setIncompleteParts,
 } from "../../redux/collection";
 import { cleanParts } from "../../redux/set";
-import { IncompleteParts, Part, Set } from "../../types/types";
+import { IncompleteParts, Part, PartToModify, Set } from "../../types/types";
 import Quantity from "../Part/Quantity";
 import CountSetsIncomplete from "../Set/CountSetsIncomplete";
 
@@ -17,11 +18,10 @@ const MissingPartsList = () => {
   const allSets = useReduxSelector(selectAllSets);
   const dispatch = useReduxDispatch();
   useEffect(() => {
+    dispatch(setIncompleteParts([]));
     dispatch(getIncompleteParts(allSets));
-    //dispatch(cleanParts());
-    //dispatch(cleanSets());
     return () => {};
-  }, [dispatch]);
+  }, []);
   return (
     <Box>
       <CountSetsIncomplete numberSets={missingParts.length} />
@@ -37,17 +37,17 @@ const MissingPartsList = () => {
     </Box>
   );
 };
-function Item({ part }: ItemProps) {
+function Item({ partToModify }: ItemProps) {
+  const part = partToModify.part;
   const numberMissing = part.quantityPart - part.quantityCollectorPart;
   return (
-    <Grid item style={{ border: "solid 0.5px", padding: 5, margin: 5 }}>
+    <Grid item style={{ padding: 5, margin: 5 }}>
       <p>
         <b>{part.idElement}</b>
       </p>
       <Badge color="error" badgeContent={numberMissing}>
         <img width="50px" src={part.imageUrl} />
       </Badge>
-      <Quantity part={part} />
     </Grid>
   );
 }
@@ -73,9 +73,14 @@ function SectionItem({ set, parts }: SectionItemProps) {
           {set.quantityParts - set.quantityCollectorParts + " " + MISSING_TEXT}
         </Typography>
         <Grid container spacing={2}>
-          {parts.map((part) => (
-            <Item part={part} key={part.idElement + part.index + set.id} />
-          ))}
+          {parts.map((part) => {
+            return (
+              <Item
+                partToModify={{ idParts: set.idParts, part: part }}
+                key={part.index + set.id}
+              />
+            );
+          })}
         </Grid>
       </Box>
       <Divider />
@@ -84,7 +89,7 @@ function SectionItem({ set, parts }: SectionItemProps) {
 }
 
 type ItemProps = {
-  part: Part;
+  partToModify: PartToModify;
 };
 type SectionItemProps = {
   set: Set;

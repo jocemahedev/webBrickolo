@@ -129,6 +129,9 @@ const collectionSlice = createSlice({
       })
       .addCase(addSet.fulfilled, (state, _action) => {
         state.addSetStatus = "fulfilled";
+      })
+      .addCase(getIncompleteParts.fulfilled, (state, _action) => {
+        console.log("on est fullfilled");
       });
   },
 });
@@ -147,45 +150,57 @@ export const deleteSet = createAsyncThunk<void, string>(
 );
 export const deleteParts = createAsyncThunk<void, string>(
   "collection/deleteParts",
-  async (idParts) => {
-    const dbRef = ref(db, "/parts/" + idParts);
+  async (idParts, { getState }) => {
+    const rootState = getState() as RootState;
+    const idSets = rootState.collection.currentCollection?.idSets;
+    const dbRef = ref(db, "/parts/" + idSets + "/"+ idParts);
     await remove(dbRef);
   }
 );
 export const getIncompleteParts = createAsyncThunk<void, Set[]>(
   "collection/getIncompleteParts",
-  async (allSets, { dispatch }) => {
-    let incompleteParts: IncompleteParts[] = [];
-    allSets
-      .filter((oneSet) => oneSet.quantityCollectorParts < oneSet.quantityParts)
-      .map((oneSet) => {
-        const dbRef = ref(db, "/parts/" + oneSet.idParts);
-        get(query(dbRef)).then((snapshot) => {
-          if (snapshot.exists()) {
-            const values: Part[] = snapshot.val();
-            const incompletePartsSet = values.filter(
+  async (allSets, { getState, dispatch }) => {
+    const rootState = getState() as RootState;
+    const idSets = rootState.collection.currentCollection?.idSets;
+    const dbRef = ref(db, "/parts/" + idSets);
+    let missingParts: IncompleteParts[] = [];
+    await get(query(dbRef))
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          console.log("🟢 snapshot");
+          console.log(snapshot.val());
+          const obj = snapshot.val();
+          Object.entries(obj).map(([key, values]) => {
+            const parts: Part[] = values;
+            const missingPartsSet = parts.filter(
               (value) => value.quantityCollectorPart < value.quantityPart
             );
-            const oneIncompleteParts: IncompleteParts = {
-              set: oneSet,
-              data: incompletePartsSet,
-            };
-            incompleteParts = [...incompleteParts, oneIncompleteParts];
-          } else {
-            console.log(
-              "No data available for " + oneSet.idLego + " " + oneSet.id
-            );
-          }
-        });
+            const oneSet: Set = allSets.filter((oneSet) => oneSet.idParts == key)[0];
+            if (missingPartsSet.length > 0 && oneSet) {
+              const oneMissingParts: IncompleteParts = {
+                set: oneSet,
+                data: missingPartsSet,
+              };
+              missingParts = [...missingParts, oneMissingParts];
+            }
+          });
+        }
+      })
+      .then(() => {
+        console.log("on finish him");
+        console.log("☣️ missing parts ending");
+        console.log(missingParts);
+        dispatch(setIncompleteParts(missingParts));
       });
-    setIncompleteParts(incompleteParts);
   }
 );
 export const completeSet = createAsyncThunk<void, Set>(
   "collection/completeSet",
-  async (setToBeCompleted, { dispatch }) => {
+  async (setToBeCompleted, { getState, dispatch }) => {
     setToBeCompleted;
-    const dbRef = ref(db, "/parts/" + setToBeCompleted.idParts);
+    const rootState = getState() as RootState;
+    const idSets = rootState.collection.currentCollection?.idSets;
+    const dbRef = ref(db, "/parts/" + idSets + "/" + setToBeCompleted.idParts);
     await get(query(dbRef))
       .then((snapshot) => {
         if (snapshot.exists()) {
@@ -289,7 +304,6 @@ export const {
   addSetToCollection,
   deleteSetToCollection,
   setAddSetStatus,
-  cleanMissingPart,
   cleanSets,
 } = collectionSlice.actions;
 

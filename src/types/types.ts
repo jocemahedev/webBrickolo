@@ -27,6 +27,11 @@ export type Parts = {
   id: string;
   parts: Part[];
 };
+
+export type PartToModify = {
+  idParts: string;
+  part: Part;
+};
 export type Part = {
   id: string;
   name: string;

@@ -4,7 +4,7 @@ import {
   createSelector,
   createAsyncThunk,
 } from "@reduxjs/toolkit";
-import { Set, Part, Color } from "../../types/types";
+import { Set, Part, Color, PartToModify } from "../../types/types";
 import { db } from "../services/firebase/firebaseConfig";
 import {
   ref,
@@ -14,7 +14,7 @@ import {
   query,
   DatabaseReference,
 } from "firebase/database";
-import { RootState } from "..";
+import { AppDispatch, RootState } from "..";
 import { RebrickablePart } from "../services/rebrickable/type";
 import { rebrickableApi } from "../services/rebrickable/rebrickable.web";
 import { selectCurrentSet } from "../collection";
@@ -39,8 +39,10 @@ export const addParts = createAsyncThunk<void, RebrickablePart[]>(
   "set/addParts",
   async (rebrickableParts: RebrickablePart[], { getState, dispatch }) => {
     const rootState = getState() as RootState;
+    const idSets = rootState.collection.currentCollection?.idSets;
     const currentSet = selectCurrentSet(rootState);
-    const parts = ref(db, "/parts/" + currentSet?.idParts);
+    const parts = ref(db, "/parts/" + idSets + "/" + currentSet?.idParts);
+
     const newParts: Part[] = rebrickableParts
       .filter((part) => part.is_spare === false)
       .map((part, index) => {
@@ -70,89 +72,96 @@ export const addParts = createAsyncThunk<void, RebrickablePart[]>(
         };
       });
     set(parts, newParts);
+
     dispatch(setAllParts(newParts));
   }
 );
-const fetchPartsAction = async (_: any, { getState, dispatch }) => {
-  const rootState = getState() as RootState;
-  const currentSet = selectCurrentSet(rootState);
-  console.log("currentSet");
-  console.log(currentSet);
-  if (currentSet) {
-    const dbRef = ref(db, "/parts/" + currentSet?.idParts);
+const fetchPartsAction = async (idParts: String, dispatch: AppDispatch) => {
+  const dbRef = ref(db, "/parts/" + idParts);
+  const dataSnapshot = await get(query(dbRef));
+  const values: Part[] = dataSnapshot.val();
+  let datas: Part[] = [];
+  for (const data in values) {
+    datas.push(values[data]);
+  }
+
+  dispatch(setAllParts(datas));
+};
+export const fetchParts = createAsyncThunk<void, String>(
+  "set/fetchParts",
+  async (idParts: String, { getState, dispatch }) => {
+    const rootState = getState() as RootState;
+    const idSets = rootState.collection.currentCollection?.idSets;
+    const dbRef = ref(db, "/parts/" + idSets + "/" + idParts);
     const dataSnapshot = await get(query(dbRef));
     const values: Part[] = dataSnapshot.val();
     let datas: Part[] = [];
     for (const data in values) {
       datas.push(values[data]);
     }
-
     dispatch(setAllParts(datas));
   }
-};
-export const fetchParts = createAsyncThunk<void, void>(
-  "set/fetchParts",
-  fetchPartsAction
 );
-export const updateParts = createAsyncThunk<void, void>(
-  "set/updateParts",
-  fetchPartsAction
-);
-export const incrementPart = createAsyncThunk<boolean, Part>(
+
+export const incrementPart = createAsyncThunk<boolean, PartToModify>(
   "set/incrementPart",
-  async (part, { getState }) => {
+  async (partToModify, { getState }) => {
     const rootState = getState() as RootState;
-    const currentSet = selectCurrentSet(rootState);
+    const idSets = rootState.collection.currentCollection?.idSets;
+    const part = partToModify.part;
+    const idParts = partToModify.idParts;
     const indexPart = part.index;
     if (part.quantityCollectorPart < part.quantityPart) {
       const newQuantity = part.quantityCollectorPart + 1;
-      if (currentSet) {
-        const dbRef = ref(
-          db,
-          "/parts/" + currentSet?.idParts + "/" + indexPart
-        );
-        await updatePart(dbRef, newQuantity);
-        return true;
-      }
+      const dbRef = ref(
+        db,
+        "/parts/" + idSets + "/"  +idParts + "/" + indexPart
+      );
+      await updatePart(dbRef, newQuantity);
+      return true;
     }
+
     return false;
   }
 );
-export const completePart = createAsyncThunk<boolean, Part>(
+export const completePart = createAsyncThunk<boolean, PartToModify>(
   "set/completePart",
-  async (part, { getState }) => {
+  async (partToModify, { getState }) => {
     const rootState = getState() as RootState;
-    const currentSet = selectCurrentSet(rootState);
+    const idSets = rootState.collection.currentCollection?.idSets;
+    const part = partToModify.part;
+    const idParts = partToModify.idParts;
     const indexPart = part.index;
     if (part.quantityCollectorPart !== part.quantityPart) {
       const newQuantity = part.quantityPart;
-      if (currentSet) {
-        const dbRef = ref(
-          db,
-          "/parts/" + currentSet?.idParts + "/" + indexPart
-        );
-        await updatePart(dbRef, newQuantity);
-        return true;
-      }
+      const dbRef = ref(
+        db,
+        "/parts/" + idSets + "/" + idParts + "/" + indexPart
+      );
+      await updatePart(dbRef, newQuantity);
+      return true;
     }
     return false;
   }
 );
-export const decrementPart = createAsyncThunk<void, Part>(
+export const decrementPart = createAsyncThunk<void, PartToModify>(
   "set/decrementPart",
-  async (part, { getState }) => {
+  async (partToModify, { getState }) => {
     const rootState = getState() as RootState;
-    const currentSet = selectCurrentSet(rootState);
+    const idSets = rootState.collection.currentCollection?.idSets;
+    console.log("⊖ on décremente");
+    console.log(partToModify);
+
+    const part = partToModify.part;
+    const idParts = partToModify.idParts;
     const indexPart = part.index;
     if (part.quantityCollectorPart > 0) {
       const newQuantity = part.quantityCollectorPart - 1;
-      if (currentSet) {
-        const dbRef = ref(
-          db,
-          "/parts/" + currentSet?.idParts + "/" + indexPart
-        );
-        await updatePart(dbRef, newQuantity);
-      }
+      const dbRef = ref(
+        db,
+        "/parts/" + idSets + "/" + idParts + "/" + indexPart
+      );
+      await updatePart(dbRef, newQuantity);
     }
   }
 );
@@ -198,15 +207,11 @@ const SetSlice = createSlice({
   },
   extraReducers(builder) {
     builder
-      .addCase(fetchParts.pending, (state, _action) => {
-        state.statusParts = "loading";
-      })
+
       .addCase(fetchParts.fulfilled, (state, _action) => {
         state.statusParts = "fulfilled";
       })
-      .addCase(updateParts.fulfilled, (state, _action) => {
-        state.statusParts = "fulfilled";
-      })
+
       .addCase(incrementPart.fulfilled, (_state, _action) => {
         console.log("on pass dans increment");
         console.log("on pass dans increment fin");

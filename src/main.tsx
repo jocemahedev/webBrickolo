@@ -30,13 +30,11 @@ export const themeOptions = {
 const theme = createTheme(themeOptions);
 
 ReactDOM.createRoot(rootElement as HTMLElement).render(
-  
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <ThemeProvider theme={theme}>
-          <App />
-        </ThemeProvider>
-      </PersistGate>
-    </Provider>
-
+  <Provider store={store}>
+    <PersistGate loading={null} persistor={persistor}>
+      <ThemeProvider theme={theme}>
+        <App />
+      </ThemeProvider>
+    </PersistGate>
+  </Provider>
 );

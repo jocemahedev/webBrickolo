@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Part } from "../../types/types";
+import { Part, PartToModify } from "../../types/types";
 
 import { useReduxDispatch, useReduxSelector } from "../../redux";
 import {
@@ -16,15 +16,18 @@ import OnlyMinifigFilter from "../Filter/OnlyMinifigFilter";
 import Quantity from "../Part/Quantity";
 import QuantityParts from "../Set/QuantityParts";
 import { Box } from "@mui/system";
+import { selectCurrentSet } from "../../redux/collection";
+
 
 const PartsList = () => {
   const dispatch = useReduxDispatch();
   const allColors = useReduxSelector(selectAllColors);
   const status = useReduxSelector(selectStatus);
   const allParts = useReduxSelector(selectPartsByColorByCompleted);
+  const currentSet = useReduxSelector(selectCurrentSet);
 
   useEffect(() => {
-    dispatch(fetchParts());
+    if (currentSet) dispatch(fetchParts(currentSet.idParts));
   }, [dispatch]);
   console.log(allParts);
   const isLoading = status === "loading";
@@ -58,10 +61,16 @@ const PartsList = () => {
       {!isLoading && (
         <>
           {zeroPart && <p>{ZERO_PART_MESSAGE}</p>}
-          {!zeroPart && (
+          {!zeroPart && currentSet && (
             <Grid container spacing={2}>
               {allParts.map((onePart, index) => (
-                <Item key={index} part={onePart} />
+                <Item
+                  key={index}
+                  partToModify={{
+                    idParts: currentSet.idParts,
+                    part: onePart,
+                  }}
+                />
               ))}
             </Grid>
           )}
@@ -71,7 +80,9 @@ const PartsList = () => {
   );
 };
 
-function Item({ part }: ItemProps) {
+function Item({ partToModify }: ItemProps) {
+  const part = partToModify.part;
+  const idParts = partToModify.idParts;
   const isCompleted = part.quantityPart === part.quantityCollectorPart;
   const badgeText = part.quantityCollectorPart + "/" + part.quantityPart;
   let badgeColor: "success" | "error";
@@ -85,13 +96,13 @@ function Item({ part }: ItemProps) {
       <Badge color={badgeColor} badgeContent={badgeText}>
         <img width="50px" src={part.imageUrl} />
       </Badge>
-      <Quantity part={part} />
+      <Quantity part={{ idParts: idParts, part: part }} />
     </Grid>
   );
 }
 
 type ItemProps = {
-  part: Part;
+  partToModify: PartToModify;
 };
 
 export default PartsList;
