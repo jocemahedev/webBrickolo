@@ -1,16 +1,17 @@
-import { Part } from "../../types/types";
+import { Part, PartToModify } from "../../types/types";
 
 import {
   completePart,
   decrementPart,
   incrementPart,
-  updateParts,
+  fetchParts,
 } from "../../redux/set";
 import { useReduxDispatch } from "../../redux";
 import { Button, ButtonGroup } from "@mui/material";
 
 const Quantity = ({ part }: QuantityProps) => {
   const dispatch = useReduxDispatch();
+  const idParts = part.idParts;
   return (
     <div>
       <ButtonGroup
@@ -21,7 +22,7 @@ const Quantity = ({ part }: QuantityProps) => {
           size="small"
           onClick={() => {
             dispatch(decrementPart(part));
-            dispatch(updateParts());
+            dispatch(fetchParts(idParts));
           }}
         >
           -
@@ -31,7 +32,7 @@ const Quantity = ({ part }: QuantityProps) => {
           size="small"
           onClick={() => {
             dispatch(incrementPart(part));
-            dispatch(updateParts());
+            dispatch(fetchParts(idParts));
           }}
         >
           +
@@ -40,7 +41,7 @@ const Quantity = ({ part }: QuantityProps) => {
           size="small"
           onClick={() => {
             dispatch(completePart(part));
-            dispatch(updateParts());
+            dispatch(fetchParts(idParts));
           }}
         >
           ✔️
@@ -51,7 +52,7 @@ const Quantity = ({ part }: QuantityProps) => {
 };
 
 type QuantityProps = {
-  part: Part;
+  part: PartToModify;
 };
 
 export default Quantity;
