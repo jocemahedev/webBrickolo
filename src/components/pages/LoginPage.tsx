@@ -24,8 +24,7 @@ export function LoginPage() {
   };
   const { handleSubmit, control } = useForm();
   const onSubmit = (data: any) =>
-    // signIn(data.username, data.password)
-    signIn("testtoto6@gmail.com", "testtoto6")
+     signIn(data.username, data.password)
       .then((userCredential: any) => {
         // Signed in
 
