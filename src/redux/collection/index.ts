@@ -169,7 +169,7 @@ export const getIncompleteParts = createAsyncThunk<void, Set[]>(
         if (snapshot.exists()) {
           console.log("🟢 snapshot");
           console.log(snapshot.val());
-          const obj = snapshot.val();
+          const obj: Part[][] = snapshot.val();
           Object.entries(obj).map(([key, values]) => {
             const parts: Part[] = values;
             const missingPartsSet = parts.filter(

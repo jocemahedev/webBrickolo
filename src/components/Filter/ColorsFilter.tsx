@@ -11,7 +11,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Checkbox from "@mui/material/Checkbox";
 
-const ColorsFilter = ({ colors }: ColorsFilterProps) => {
+const ColorsFilter = ({ colors }: CheckmarksProps) => {
   return (
     <div>
       <MultipleSelectCheckmarks colors={colors} />

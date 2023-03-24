@@ -32,6 +32,7 @@ export type PartToModify = {
   idParts: string;
   part: Part;
 };
+
 export type Part = {
   id: string;
   name: string;
@@ -51,7 +52,7 @@ export type IncompleteParts = {
   data: Part[];
 };
 export type Color = {
-  id: number;
+  id: string;
   isTransparent: boolean;
   name: string;
   codeRgb: string;

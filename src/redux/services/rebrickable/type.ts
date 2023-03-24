@@ -1,4 +1,4 @@
-import {Color} from '../../../types/types';
+import { Color } from "../../../types/types";
 
 export type RebrickableSet = {
   last_modified_dt: string;

@@ -34,6 +34,39 @@ export const initialState: SetState = {
   currentCompleteFilter: "none",
   onlyMinifig: false,
 };
+const transformRebrickableParts = (
+  rebrickablePart: RebrickablePart[],
+  idSet: string
+) => {
+  return rebrickablePart
+    .filter((part) => part.is_spare === false)
+    .map((part, index) => {
+      const isMiniFig = part.set_num.startsWith("fig");
+      let idMiniFig = null;
+      if (isMiniFig) {
+        idMiniFig = part.set_num;
+      }
+      return {
+        id: part.id,
+        name: part.part.name,
+        idElement: part.element_id,
+        idCategory: part.part.part_cat_id,
+        index: index,
+        color: {
+          id: (part.color.id),
+          name: part.color.name,
+          codeRgb: part.color.rgb,
+          isTransparent: part.color.is_trans,
+        },
+        imageUrl: part.part.part_img_url,
+        quantityPart: part.quantity,
+        quantityCollectorPart: 0,
+        idSet: idSet,
+        isMiniFig: isMiniFig,
+        idMiniFig: idMiniFig,
+      };
+    });
+};
 
 export const addParts = createAsyncThunk<void, RebrickablePart[]>(
   "set/addParts",
@@ -42,40 +75,17 @@ export const addParts = createAsyncThunk<void, RebrickablePart[]>(
     const idSets = rootState.collection.currentCollection?.idSets;
     const currentSet = selectCurrentSet(rootState);
     const parts = ref(db, "/parts/" + idSets + "/" + currentSet?.idParts);
-
-    const newParts: Part[] = rebrickableParts
-      .filter((part) => part.is_spare === false)
-      .map((part, index) => {
-        const isMiniFig = part.set_num.startsWith("fig");
-        let idMiniFig = null;
-        if (isMiniFig) {
-          idMiniFig = part.set_num;
-        }
-        return {
-          id: part.id,
-          name: part.part.name,
-          idElement: part.element_id,
-          idCategory: part.part.part_cat_id,
-          index: index,
-          color: {
-            id: part.color.id,
-            name: part.color.name,
-            codeRgb: part.color.rgb,
-            isTransparent: part.color.is_trans,
-          },
-          imageUrl: part.part.part_img_url,
-          quantityPart: part.quantity,
-          quantityCollectorPart: 0,
-          idSet: currentSet?.idLego,
-          isMiniFig: isMiniFig,
-          idMiniFig: idMiniFig,
-        };
-      });
-    set(parts, newParts);
-
-    dispatch(setAllParts(newParts));
+    if (currentSet?.idLego) {
+      const newParts = transformRebrickableParts(
+        rebrickableParts,
+        currentSet?.idLego
+      );
+      set(parts, newParts);
+      dispatch(setAllParts(newParts));
+    }
   }
 );
+
 const fetchPartsAction = async (idParts: String, dispatch: AppDispatch) => {
   const dbRef = ref(db, "/parts/" + idParts);
   const dataSnapshot = await get(query(dbRef));
@@ -115,7 +125,7 @@ export const incrementPart = createAsyncThunk<boolean, PartToModify>(
       const newQuantity = part.quantityCollectorPart + 1;
       const dbRef = ref(
         db,
-        "/parts/" + idSets + "/"  +idParts + "/" + indexPart
+        "/parts/" + idSets + "/" + idParts + "/" + indexPart
       );
       await updatePart(dbRef, newQuantity);
       return true;
